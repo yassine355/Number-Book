@@ -16,6 +16,7 @@ import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
 import geolib from 'geolib';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
 
 export default function SearcheAll() {
   const navigation = useNavigation();
@@ -28,64 +29,34 @@ export default function SearcheAll() {
   const [userLocation, setUserLocation] = useState(null);
   const [nearestPhoneNumber, setNearestPhoneNumber] = useState(null);
 
-  useEffect(() => {
-    setIsLoading(true);
-    loadContacts();
-  }, []);
-
-  const loadContacts = async () => {
+  const searchByName = async () => {
     try {
-      const response = await axios.get('https://your-api-url/contacts'); // Replace 'https://your-api-url/contacts' with your API endpoint
+      const response = await axios.get(`https://your-api-url/searchByName?name=${encodeURIComponent(searchQuery)}`);
       const data = response.data;
-      console.log(data);
       setContacts(data);
       setInMemoryContacts(data);
-      setIsLoading(false);
     } catch (error) {
-      console.log('Error loading contacts:', error);
-      // Handle the error, e.g., show an error message to the user
+      console.log('Error searching contacts by name:', error);
     }
   };
 
-  const filterByName = (contact) => {
-    const contactLowercase = (
-      contact.firstName +
-      ' ' +
-      contact.lastName
-    ).toLowerCase();
-
-    const searchTermLowercase = searchQuery.toLowerCase();
-
-    return contactLowercase.indexOf(searchTermLowercase) > -1;
-  };
-
-  const filterByPhone = (contact) => {
-    if (contact.phoneNumbers && contact.phoneNumbers.length > 0) {
-      const contactPhoneNumber = contact.phoneNumbers[0].digits;
-      const searchTermLowercase = searchQuery.toLowerCase();
-
-      return contactPhoneNumber.indexOf(searchTermLowercase) > -1;
+  const searchByPhone = async () => {
+    try {
+      const response = await axios.get(`https://your-api-url/searchByPhone?phoneNumber=${searchQuery}`);
+      const data = response.data;
+      setContacts(data);
+      setInMemoryContacts(data);
+    } catch (error) {
+      console.log('Error searching contacts by phone number:', error);
     }
-
-    return false;
-  };
-
-  const searchByName = () => {
-    const filteredContacts = inMemoryContacts.filter(filterByName);
-    setContacts(filteredContacts);
-  };
-
-  const searchByPhone = () => {
-    const filteredContacts = inMemoryContacts.filter(filterByPhone);
-    setContacts(filteredContacts);
   };
 
   const handlePreviousPage = () => {
-    navigation.navigate('SearcheBar'); // Replace 'PreviousPage' with the name of the previous screen
+    navigation.navigate('SearcheBar');
   };
 
   const handleNextPage = () => {
-    navigation.navigate(''); // Replace 'NextPage' with the name of the next screen
+    navigation.navigate('');
   };
 
   const indexOfLastContact = currentPage * contactsPerPage;
@@ -104,7 +75,6 @@ export default function SearcheAll() {
       )}
     </View>
   );
-  
 
   const getLocation = async () => {
     try {
@@ -151,8 +121,8 @@ export default function SearcheAll() {
   };
 
   const handleGetLocation = () => {
-    getLocation(); // Get the user's location and nearest phone number
-    navigation.navigate('Location', { userLocation, nearestPhoneNumber }); // Navigate to the Location screen
+    getLocation();
+    navigation.navigate('Location', { userLocation, nearestPhoneNumber });
   };
 
   return (
@@ -200,7 +170,7 @@ export default function SearcheAll() {
               <Text style={styles.noContactsText}>No Contacts Found</Text>
             </View>
           )}
-          showsVerticalScrollIndicator={false} // Hide the scrolling bar
+          showsVerticalScrollIndicator={false}
         />
       </View>
       <View style={styles.footer}>
